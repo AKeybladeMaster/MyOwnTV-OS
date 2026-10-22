@@ -4,7 +4,7 @@ import { APP_ID, ROOT, LOCAL, readJson, writeJson, sha256, assertLocalPath } fro
 import { connect, pair, CONNECTION_FILE } from './lib/ssap.mjs';
 import { backup, validateBackup } from './lib/backup.mjs';
 import { inspectPackage } from './lib/ipk.mjs';
-import { ares } from './lib/ares.mjs';
+import { ares, verifyAresTarget } from './lib/ares.mjs';
 
 const args = process.argv.slice(2);
 const command = args.shift();
@@ -58,6 +58,10 @@ try {
       const { directory } = await readJson(path.join(LOCAL, 'latest-backup.json'));
       const snapshot = await validateBackup(directory, connection, target);
       if (snapshot.ownAppPreviouslyInstalled) throw new Error('An earlier MyOwnTV was installed at baseline. Preserve its IPK before an update; automatic replacement is disabled.');
+      const currentApps = await connection.request('com.webos.applicationManager/listApps');
+      if (!Array.isArray(currentApps.apps)) throw new Error('Cannot verify current installed apps. Nothing was installed.');
+      if (currentApps.apps.some(app => app.id === APP_ID)) throw new Error('MyOwnTV is already installed now. Automatic replacement is disabled, even when it was absent at baseline.');
+      await verifyAresTarget(target, connection);
       const manifest = await readJson(path.join(ROOT, 'out/release-manifest.json'));
       if (path.basename(manifest.filename) !== manifest.filename || !manifest.filename.endsWith('.ipk')) throw new Error('Invalid IPK filename.');
       const file = path.join(ROOT, 'out', manifest.filename);
@@ -68,8 +72,13 @@ try {
       const record = { schema: 1, backup: directory, appId: APP_ID, sha256: manifest.sha256, version: info.version, status: 'prepared', systemChanges: [], created: new Date().toISOString() };
       await writeJson(recordFile, record, { exclusive: true });
       await fs.mkdir(path.join(LOCAL, 'packages'), { recursive: true });
-      await fs.copyFile(file, path.join(LOCAL, 'packages', manifest.sha256 + '.ipk'));
-      console.log(await ares('install', ['-d', target.aresDevice, file]));
+      const retainedPackage = path.join(LOCAL, 'packages', manifest.sha256 + '.ipk');
+      try { await fs.writeFile(retainedPackage, data, { flag: 'wx', mode: 0o600 }); }
+      catch (error) {
+        if (error.code !== 'EEXIST') throw error;
+        if (sha256(await fs.readFile(retainedPackage)) !== manifest.sha256) throw new Error('The retained package checksum is invalid. Nothing was installed.');
+      }
+      console.log(await ares('install', ['-d', target.aresDevice, retainedPackage]));
       record.status = 'installed'; await writeJson(recordFile, record);
       console.log(await ares('launch', ['-d', target.aresDevice, APP_ID]));
       record.status = 'launched'; await writeJson(recordFile, record);
@@ -77,6 +86,7 @@ try {
     } else if (command === 'restore') {
       const { directory } = await readJson(path.join(LOCAL, 'latest-backup.json'));
       await validateBackup(directory, connection, target);
+      await verifyAresTarget(target, connection);
       const info = await connection.request('com.webos.applicationManager/listApps');
       if (info.apps.some(app => app.id === APP_ID)) console.log(await ares('launch', ['-d', target.aresDevice, '--close', APP_ID]));
       // Ordinary application launch; the native launcher was always enabled.

@@ -26,14 +26,14 @@ function ar(entries) {
   }
   return Buffer.concat(chunks);
 }
-function packageWith({ id = APP_ID, permissions, extras = [], control = [] } = {}) {
+function packageWith({ id = APP_ID, permissions, extras = [], control = [], controlId = id, packageId = id } = {}) {
   const info = { id, type: 'web', main: 'index.html', version: '0.1.0' };
   if (permissions) info.requiredPermissions = permissions;
-  return ar([['debian-binary', Buffer.from('2.0\n')], ['control.tar.gz', gzipSync(tar([{ name: 'control', body: 'Package: ' + id }, ...control]))], ['data.tar.gz', gzipSync(tar([{ name: 'usr/palm/applications/' + id + '/appinfo.json', body: JSON.stringify(info) }, ...extras]))]]);
+  return ar([['debian-binary', Buffer.from('2.0\n')], ['control.tar.gz', gzipSync(tar([{ name: 'control', body: 'Package: ' + controlId + '\nVersion: 0.1.0\nArchitecture: all\n' }, ...control]))], ['data.tar.gz', gzipSync(tar([{ name: 'usr/palm/applications/' + id + '/appinfo.json', body: JSON.stringify(info) }, { name: 'usr/palm/packages/' + id + '/packageinfo.json', body: JSON.stringify({ id: packageId, version: '0.1.0', app: packageId }) }, ...extras]))]]);
 }
 
 test('the installer accepts only this standalone web app identity', () => {
-  assert.deepEqual(inspectPackage(packageWith()), { id: APP_ID, version: '0.1.0', files: 1 });
+  assert.deepEqual(inspectPackage(packageWith()), { id: APP_ID, version: '0.1.0', files: 2 });
   assert.throws(() => inspectPackage(packageWith({ id: 'com.webos.app.home' })), /outside|identity/);
   assert.throws(() => inspectPackage(packageWith({ permissions: ['all'] })), /permissions/);
 });
@@ -49,4 +49,24 @@ test('corrupt or truncated archives cannot be installed', () => {
   const valid = packageWith();
   assert.throws(() => readAr(valid.subarray(0, valid.length - 30)), /Invalid/);
   assert.throws(() => readTar(tar([{ name: 'file', body: 'hello' }]).subarray(0, 514)), /Unsafe/);
+});
+test('path aliases cannot replace validated metadata or hide install scripts and directories', () => {
+  assert.throws(() => inspectPackage(packageWith({ control: [{ name: '././postinst', body: 'danger' }] })), /scripts/);
+  assert.throws(() => inspectPackage(packageWith({ extras: [{ name: 'usr/palm/applications/' + APP_ID + '/./appinfo.json', body: '{"type":"native"}' }] })), /noncanonical/);
+  assert.throws(() => inspectPackage(packageWith({ extras: [{ name: 'etc/', type: '5' }] })), /outside/);
+  assert.throws(() => readTar(tar([{ name: 'file' }, { name: '././file' } ])), /Duplicate/);
+});
+test('control and package identities cannot redirect an otherwise valid web app package', () => {
+  assert.throws(() => inspectPackage(packageWith({ controlId: 'com.webos.app.home' })), /identity/);
+  assert.throws(() => inspectPackage(packageWith({ packageId: 'com.webos.app.home' })), /identity/);
+});
+test('unsupported tar formats and ambiguous directory headers cannot differ from LG extraction', () => {
+  const legacy = tar([{ name: 'etc/profile', body: 'danger' }]);
+  legacy.fill(0, 257, 265);
+  legacy.write('usr/palm/applications/' + APP_ID, 345);
+  legacy.fill(32, 148, 156);
+  const checksum = legacy.subarray(0, 512).reduce((sum, byte) => sum + byte, 0);
+  legacy.write(checksum.toString(8).padStart(6, '0') + '\0 ', 148);
+  assert.throws(() => readTar(legacy), /ustar/);
+  assert.throws(() => readTar(tar([{ name: 'folder/', body: 'hidden header' }])), /directory slash/);
 });

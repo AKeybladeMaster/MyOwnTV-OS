@@ -71,8 +71,8 @@ The script verifies the snapshot, closes this app and opens native LG Home. It r
 |---|---|
 | `src/domain/` | Preferences, favorite order, deterministic navigation |
 | `src/platform/` | Public webOS launch/exit and browser preview |
-| `src/ui/` | Wallpaper lifecycle and original geometric artwork |
-| `src/app.js` | Screen composition and interactions |
+| `src/ui/` | Screen rendering, interactions, wallpaper lifecycle and artwork |
+| `src/app.js` | Dependency composition and mounting the UI |
 | `config/` | App catalog, photos, target and app identity |
 | `tools/lib/` | Paired connection, official CLI wrapper, snapshots, IPK validation |
 | `tests/` | State, navigation, package safety, browser flow |

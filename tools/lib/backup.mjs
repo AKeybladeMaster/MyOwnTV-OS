@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { APP_ID, LOCAL, ROOT, readJson, writeJson, sha256, assertLocalPath } from './files.mjs';
-import { ares } from './ares.mjs';
+import { ares, verifyAresTarget } from './ares.mjs';
 
 export async function backup(connection, target) {
   const system = await connection.assertModel(target.model);
@@ -31,8 +31,7 @@ export async function backup(connection, target) {
     } catch (error) { errors.push({ operation: name, reason: error.message }); }
   }
   if (!Array.isArray(apps) || !apps.length) throw new Error('No installed-app inventory was obtained. Nothing may be installed or changed.');
-  const systemInfo = await ares('device', ['-d', target.aresDevice, '--system-info']);
-  if (!systemInfo.includes('modelName : ' + target.model) || !systemInfo.includes('firmwareVersion : ' + target.firmware)) throw new Error('SSH target identity/firmware differs from this project.');
+  const systemInfo = await verifyAresTarget(target, connection);
   await save('developer-system-info.json', { text: systemInfo });
   await save('developer-apps.json', { text: await ares('install', ['-d', target.aresDevice, '--list']) });
   try { await connection.capture(path.join(directory, 'baseline.jpg')); entries.push({ path: 'baseline.jpg', sha256: sha256(await fs.readFile(path.join(directory, 'baseline.jpg'))) }); }

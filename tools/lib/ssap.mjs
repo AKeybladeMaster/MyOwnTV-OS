@@ -86,7 +86,7 @@ export async function connect({ host, clientKey, fingerprint, model, pairing = f
       if (!['UP', 'DOWN', 'LEFT', 'RIGHT', 'ENTER', 'BACK', 'HOME', 'MENU', 'QMENU', 'EXIT'].includes(name)) throw new Error('Unsupported remote button. Factory/service keys are never allowed.');
       const response = await request('com.webos.service.networkinput/getPointerInputSocket');
       const url = new URL(response.socketPath);
-      if (url.hostname !== host || !['wss:', 'ws:'].includes(url.protocol)) throw new Error('TV returned an unexpected input endpoint.');
+      if (url.hostname.replace(/^\[|\]$/g, '') !== host || !['wss:', 'ws:'].includes(url.protocol)) throw new Error('TV returned an unexpected input endpoint.');
       await new Promise((resolve, reject) => {
         const pointer = new WebSocket(url, { rejectUnauthorized: false });
         const timer = setTimeout(() => { pointer.terminate(); reject(new Error('Remote input timed out.')); }, 7000);
@@ -101,7 +101,7 @@ export async function connect({ host, clientKey, fingerprint, model, pairing = f
       const response = await request('tv/executeOneShot');
       if (!response.imageUri) throw new Error('The TV returned no screenshot. DRM or capture restrictions may apply.');
       const url = new URL(response.imageUri);
-      if (url.hostname !== host || !['http:', 'https:'].includes(url.protocol)) throw new Error('The screenshot URL is outside the paired TV.');
+      if (url.hostname.replace(/^\[|\]$/g, '') !== host || !['http:', 'https:'].includes(url.protocol)) throw new Error('The screenshot URL is outside the paired TV.');
       const data = await new Promise((resolve, reject) => {
         const client = url.protocol === 'https:' ? https : http;
         const download = client.get(url, { rejectUnauthorized: false }, response => {

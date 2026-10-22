@@ -9,8 +9,10 @@ import { ROOT, LOCAL, readJson } from '../tools/lib/files.mjs';
 const started = Date.now();
 const server = spawn(process.execPath, ['tools/preview.mjs'], { cwd: ROOT, env: { ...process.env, MYOWNTV_PREVIEW_PORT: '4174' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
 let browser;
+let startupTimer;
 try {
-  await Promise.race([once(server.stdout, 'data'), once(server, 'error').then(([error]) => { throw error; }), new Promise((_, reject) => setTimeout(() => reject(new Error('Preview server did not start.')), 10000))]);
+  await Promise.race([once(server.stdout, 'data'), once(server, 'error').then(([error]) => { throw error; }), new Promise((_, reject) => { startupTimer = setTimeout(() => reject(new Error('Preview server did not start.')), 10000); })]);
+  clearTimeout(startupTimer);
   const executablePath = process.env.MYOWNTV_BROWSER || (process.platform === 'win32' ? 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe' : undefined);
   browser = await chromium.launch({ executablePath, headless: true });
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, locale: 'en-GB', timezoneId: 'Europe/Rome' });
@@ -71,6 +73,7 @@ try {
   console.log('Browser flow passed: D-pad, launch adapter, library, dock reorder, persisted settings, reduced motion, 720p scaling, no external requests or page errors.');
   console.log('Desktop browser verification only; elapsed ' + (Date.now() - started) + ' ms.');
 } finally {
+  clearTimeout(startupTimer);
   if (browser) await browser.close();
   server.kill();
 }
