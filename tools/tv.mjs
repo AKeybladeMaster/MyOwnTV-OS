@@ -5,6 +5,7 @@ import { connect, pair, CONNECTION_FILE } from './lib/ssap.mjs';
 import { backup, validateBackup } from './lib/backup.mjs';
 import { inspectPackage } from './lib/ipk.mjs';
 import { ares, verifyAresTarget } from './lib/ares.mjs';
+import { assertPreferenceExport } from './lib/update.mjs';
 
 const args = process.argv.slice(2);
 const command = args.shift();
@@ -16,7 +17,7 @@ const help = `MyOwnTV device tools (no root or system-package operations)
   npm run tv -- capture --name <step>           Save a paired TV screenshot if allowed
   npm run tv -- remote --button <UP|DOWN|LEFT|RIGHT|ENTER|BACK|HOME|QMENU>
   npm run tv -- inventory                      Print installed app names and IDs
-  npm run tv -- install                        Validate backup, install and open our IPK
+  npm run tv -- install [--update]             Validate backup, install and open our IPK
   npm run tv -- restore                        Close our app and return to native LG Home
   npm run tv -- privacy                        Show the approved privacy plan
 See docs/safety-and-restore.md for backup limits and settings recovery.`;
@@ -57,10 +58,29 @@ try {
     } else if (command === 'install') {
       const { directory } = await readJson(path.join(LOCAL, 'latest-backup.json'));
       const snapshot = await validateBackup(directory, connection, target);
-      if (snapshot.ownAppPreviouslyInstalled) throw new Error('An earlier MyOwnTV was installed at baseline. Preserve its IPK before an update; automatic replacement is disabled.');
       const currentApps = await connection.request('com.webos.applicationManager/listApps');
       if (!Array.isArray(currentApps.apps)) throw new Error('Cannot verify current installed apps. Nothing was installed.');
-      if (currentApps.apps.some(app => app.id === APP_ID)) throw new Error('MyOwnTV is already installed now. Automatic replacement is disabled, even when it was absent at baseline.');
+      const current = currentApps.apps.find(app => app.id === APP_ID);
+      const update = args.includes('--update');
+      if ((current || snapshot.ownAppPreviouslyInstalled) && !update) throw new Error('MyOwnTV already exists. Replacement requires --update, a retained prior IPK and a fresh private preference export.');
+      let previous = null;
+      if (update) {
+        if (!current || !snapshot.ownAppPreviouslyInstalled) throw new Error('An update requires a fresh baseline that includes the current MyOwnTV installation.');
+        const records = [];
+        for (const file of await fs.readdir(path.join(LOCAL, 'deployments'))) {
+          if (/^[0-9TZ.-]+\.json$/.test(file)) records.push(await readJson(path.join(LOCAL, 'deployments', file)));
+        }
+        const prior = records.filter(record => record.appId === APP_ID && record.status === 'launched').sort((a, b) => b.created.localeCompare(a.created))[0];
+        if (!prior || prior.version !== current.version || !/^[a-f0-9]{64}$/.test(prior.sha256)) throw new Error('No verified prior deployment matches the installed app.');
+        await validateBackup(prior.backup, connection, target);
+        const priorBytes = await fs.readFile(path.join(LOCAL, 'packages', prior.sha256 + '.ipk'));
+        if (sha256(priorBytes) !== prior.sha256 || inspectPackage(priorBytes).version !== current.version) throw new Error('The prior IPK is missing or invalid.');
+        const preferencePointer = await readJson(path.join(LOCAL, 'latest-own-preferences.json'));
+        const preferenceFile = await assertLocalPath(preferencePointer.file, path.join(LOCAL, 'preferences'));
+        const preferences = await readJson(preferenceFile);
+        assertPreferenceExport(preferences, { version: current.version, fingerprint: connection.fingerprint, snapshotCreated: snapshot.created });
+        previous = { sha256: prior.sha256, version: prior.version, preferences: preferenceFile };
+      }
       await verifyAresTarget(target, connection);
       const manifest = await readJson(path.join(ROOT, 'out/release-manifest.json'));
       if (path.basename(manifest.filename) !== manifest.filename || !manifest.filename.endsWith('.ipk')) throw new Error('Invalid IPK filename.');
@@ -69,7 +89,7 @@ try {
       const info = inspectPackage(data);
       if (sha256(data) !== manifest.sha256 || info.id !== APP_ID || info.version !== manifest.version) throw new Error('Release checksum or identity mismatch.');
       const recordFile = path.join(LOCAL, 'deployments', new Date().toISOString().replace(/[:.]/g, '-') + '.json');
-      const record = { schema: 1, backup: directory, appId: APP_ID, sha256: manifest.sha256, version: info.version, status: 'prepared', systemChanges: [], created: new Date().toISOString() };
+      const record = { schema: 1, backup: directory, appId: APP_ID, sha256: manifest.sha256, version: info.version, previous, status: 'prepared', systemChanges: [], created: new Date().toISOString() };
       await writeJson(recordFile, record, { exclusive: true });
       await fs.mkdir(path.join(LOCAL, 'packages'), { recursive: true });
       const retainedPackage = path.join(LOCAL, 'packages', manifest.sha256 + '.ipk');
@@ -78,11 +98,12 @@ try {
         if (error.code !== 'EEXIST') throw error;
         if (sha256(await fs.readFile(retainedPackage)) !== manifest.sha256) throw new Error('The retained package checksum is invalid. Nothing was installed.');
       }
+      if (update) console.log(await ares('launch', ['-d', target.aresDevice, '--close', APP_ID]));
       console.log(await ares('install', ['-d', target.aresDevice, retainedPackage]));
       record.status = 'installed'; await writeJson(recordFile, record);
       console.log(await ares('launch', ['-d', target.aresDevice, APP_ID]));
       record.status = 'launched'; await writeJson(recordFile, record);
-      console.log('Installed only MyOwnTV. No existing app, native Home handler, or system setting was modified.');
+      console.log(update ? 'Updated only MyOwnTV; retained its previous IPK and preferences. Native Home and system settings were not modified.' : 'Installed only MyOwnTV. No existing app, native Home handler, or system setting was modified.');
     } else if (command === 'restore') {
       const { directory } = await readJson(path.join(LOCAL, 'latest-backup.json'));
       await validateBackup(directory, connection, target);
@@ -91,7 +112,7 @@ try {
       if (info.apps.some(app => app.id === APP_ID)) console.log(await ares('launch', ['-d', target.aresDevice, '--close', APP_ID]));
       // Ordinary application launch; the native launcher was always enabled.
       await connection.request('system.launcher/launch', { id: 'com.webos.app.home' });
-      console.log('Returned to native LG Home. No packages were removed.');
+      console.log('Closed MyOwnTV and requested native LG Home. No packages were removed. Confirm LG Home on the display; the foreground API may report the app underneath its overlay.');
       console.log('For any manually changed privacy setting, replay its recorded original value using docs/safety-and-restore.md. No system-setting writes are automated by this tool.');
     }
   } else throw new Error('Unknown command.\n' + help);

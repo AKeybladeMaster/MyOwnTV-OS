@@ -13,7 +13,7 @@ Google Play Store and Android APKs do not run on webOS. LG Content Store remains
 - Left/Right: move between apps. Up: TV controls. Down from the dock: All apps.
 - OK: open an app. Magic Remote pointer and click also work.
 - Back: close a panel, return from All apps, then delegate to LG's native Back behavior.
-- Home: native LG Home at all times. Add MyOwnTV to the normal LG Home row and, if available, assign a number key using LG Quick Access. There is no automatic startup/default-Home replacement.
+- Home: native LG Home at all times. Find MyOwnTV in LG Home's app row. For a direct return from live TV, hold **0** to inspect Quick Access assignments, open MyOwnTV, then hold an unused number **1–8** and confirm registration. Hold that number to return. See [LG's Quick Access instructions](https://www.lg.com/es/soporte/guias-y-soluciones/television/webos-3-5-funcion-quick-access/). There is no automatic startup/default-Home replacement.
 - Settings: edit favorites and dock order, change or pause wallpaper rotation, reduce motion, view photo credits, or open original TV settings.
 
 ## Build and preview
@@ -47,9 +47,11 @@ Accept the remote pairing prompt on the intended TV. The tool verifies the model
 .\build-and-install.ps1
 ```
 
-The script runs tests, validates the IPK, takes a readable-state snapshot, checks model/firmware, records the deployment, and installs only `io.github.akeyblademaster.myowntv`. `-BuildOnly` builds without connecting. The output is `out/io.github.akeyblademaster.myowntv_0.1.0_all.ipk`, with SHA-256 and package manifests. Keep the exact installed package and `.local` snapshots.
+The script runs tests, validates the IPK, takes a readable-state snapshot, checks model/firmware, records the deployment, and installs only `io.github.akeyblademaster.myowntv`. `-BuildOnly` builds without connecting. The output is `out/io.github.akeyblademaster.myowntv_0.1.1_all.ipk`, with SHA-256 and package manifests. Keep the exact installed package and `.local` snapshots.
 
-The initial installer refuses replacement when MyOwnTV was already installed at baseline. Preserve the previous IPK and app preferences before an update. Developer Mode is temporary: use its **EXTEND** control before expiry. LG removes developer apps if Developer Mode expires and is disabled. Turning Developer Mode off does not preserve this launcher.
+The initial installer refuses replacement when MyOwnTV already exists. For a controlled update, open MyOwnTV on the TV and run `.\build-and-install.ps1 -Update`. This requires a retained, validated prior IPK and exports only this launcher's preferences after taking the new baseline. A missing or stale export stops installation. Developer Mode is temporary: use its **EXTEND** control before expiry. LG removes developer apps if Developer Mode expires and is disabled. Turning Developer Mode off does not preserve this launcher.
+
+`node tools/inspect-app.mjs --name <unique-name> --assert-rendered` captures the **actual TV app viewport**, not native menus or other apps. `--export-preferences` saves this app's settings privately; `--launch-app <configured-id>` invokes an existing visible shortcut and verifies the resulting foreground app ID. The first app-viewport render exposed a webOS local-file CSP difference; allowing the bundled `file:` resources fixed it. Modern desktop file-origin checks alone did not reproduce that issue. See [verification](docs/verification.md).
 
 ## Privacy and recovery
 

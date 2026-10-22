@@ -46,7 +46,7 @@ svg { display: block; flex: 0 0 auto; }
 .footer { display: flex; justify-content: space-between; align-items: center; padding: 19px 4px 0; }
 .footer p { color: #bacbd1; font-size: 21px; text-shadow: 0 2px 10px #000; }
 .text-button { background: transparent; border-radius: 24px; padding: 10px 17px; color: #d9e4e8; font-size: 23px; }
-.text-button span { margin-left: 13px; }
+.chevron { display: inline-block; width: 10px; height: 10px; margin: 0 3px 4px 17px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); }
 .text-button:focus { background: #f4f7f8; color: #14242e; box-shadow: 0 0 0 4px rgba(255,255,255,.2); }
 .library, .panel { background: rgba(7,17,26,.94); }
 .subtle { font-size: 24px; color: var(--mist); margin-bottom: 9px; }

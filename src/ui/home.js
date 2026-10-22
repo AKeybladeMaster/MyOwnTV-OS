@@ -168,7 +168,8 @@ export function mountHome({ catalog, wallpapers, device, preferences }) {
       }, { id: 'rotation' })], 3);
       settingRow(container, 'Reduce motion', 'Use instant focus changes and wallpaper transitions.', [button(state.reducedMotion ? 'On' : 'Off', () => { if (save({ reducedMotion: !state.reducedMotion })) openHomeSettings('motion'); }, { id: 'motion' })], 4);
       settingRow(container, 'TV settings', 'Picture, sound, privacy, connections, and every original LG setting.', [button('Open TV settings', () => openSystem('com.palm.app.settings', 'TV settings'), { id: 'native-settings', name: 'settings' })], 5);
-      settingRow(container, 'About MyOwnTV', 'A standalone home app. Press the remote’s Home button for LG Home. Keep Developer Mode renewed in LG’s app.', [button('Photo credits', () => openCredits(), { id: 'credits', name: 'photo' })], 6);
+      settingRow(container, 'Return here quickly', 'While MyOwnTV is open, hold an unused number from 1–8 to register LG Quick Access. Hold that number to return from live TV. Hold 0 to review shortcuts.', [], 6);
+      settingRow(container, 'About MyOwnTV', 'A standalone home app. Press the remote’s Home button for LG Home. Keep Developer Mode renewed in LG’s app.', [button('Photo credits', () => openCredits(), { id: 'credits', name: 'photo' })], 7);
     });
     if (restoreId) focus(restoreId);
   }
