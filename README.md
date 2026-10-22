@@ -1,5 +1,18 @@
 # MyOwnTV
 
+<p align="center">
+  <img src="docs/images/myowntv-preview.png" alt="MyOwnTV running on an LG webOS television, with six favorite apps and a nature wallpaper" width="100%" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-LG_webOS_5-555555?style=flat-square" alt="Platform: LG webOS 5" />
+  <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white&style=flat-square" alt="HTML5" />
+  <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white&style=flat-square" alt="CSS3" />
+  <img src="https://img.shields.io/badge/JavaScript-ES2015%2B-F7DF1E?logo=javascript&logoColor=black&style=flat-square" alt="JavaScript ES2015 or newer" />
+  <img src="https://img.shields.io/badge/Build-Node.js_22%2B-339933?logo=nodedotjs&logoColor=white&style=flat-square" alt="Build tooling: Node.js 22 or newer" />
+  <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License: GNU GPL v3" />
+</p>
+
 A quiet, standalone home app for an LG 49NANO816NA on firmware 04.64.00 and webOS SDK 5.6.2. Six favorite apps, a configured app library, and rotating nature photographs. No ads, analytics, external fonts, feeds, or network requests in the launcher.
 
 This is an **ordinary `.ipk` developer app**. LG Home, settings, inputs, tuner, AirPlay, Screen Share, voice/ThinQ, updates, LG Content Store, and every existing app remain available. The remote's Home button continues to open LG Home. There is no root, system-package change, factory menu, boot hook, or Home interception.
