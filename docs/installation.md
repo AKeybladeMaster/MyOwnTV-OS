@@ -34,6 +34,8 @@ The verified hardware is **49NANO816NA / firmware 04.64.00 / SDK 5.6.2**, using 
 
 The pinned `@webos-tools/cli` is installed by `npm ci`. In the following commands replace `YOUR_TV_IP` with your TV's address; it is a placeholder, not a literal address. Use an unused alias, or reuse an existing correctly configured alias. The repository defaults to `myown-lg` in `config/target.json`.
 
+If using another alias, set `config/target.json`'s `aresDevice` to that alias and substitute it for `myown-lg` in every CLI command below. The guarded tools use that configuration rather than the CLI's default device.
+
 ```powershell
 npx ares-setup-device --list
 npx ares-setup-device -a myown-lg -i host=YOUR_TV_IP -i port=9922 -i username=prisoner
