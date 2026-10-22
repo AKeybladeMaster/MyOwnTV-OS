@@ -4,6 +4,8 @@
 
 Use [LG's official Developer Mode guide](https://webostv.developer.lge.com/develop/getting-started/developer-mode-app) as the authority for the account, app and pairing screens.
 
+Reuse Developer Mode if already enabled and keep valid connections. Before changing Dev Mode Status, Key Server or a Quick Access assignment, photograph the displayed original state and menu path and retain a private change record on the computer (for example under ignored `.local/`). Photograph the result afterward. These prerequisite photos do not require remote access; they establish the baseline before pairing is possible. Do not toggle an existing working setup just to repeat this guide.
+
 1. Connect the TV and computer to the same LAN. Wired Ethernet is fine; guest Wi-Fi or client isolation may prevent access.
 2. Create an LG Developer account on LG's developer website. On the TV, find **Developer Mode** in LG Apps / LG Content Store and install it.
 3. Open Developer Mode and sign in **on the TV**. Keep the account password out of this repository and agent conversations.
