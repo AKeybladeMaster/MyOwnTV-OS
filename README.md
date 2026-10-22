@@ -4,6 +4,12 @@ A quiet, standalone home app for an LG 49NANO816NA on firmware 04.64.00 and webO
 
 This is an **ordinary `.ipk` developer app**. LG Home, settings, inputs, tuner, AirPlay, Screen Share, voice/ThinQ, updates, LG Content Store, and every existing app remain available. The remote's Home button continues to open LG Home. There is no root, system-package change, factory menu, boot hook, or Home interception.
 
+## Start here: Developer Mode and installation
+
+First activate LG's official Developer Mode app. Follow the [installation guide](docs/installation.md), starting with **Developer Mode on the TV**, before running PC commands. It covers account setup, pairing, generating the `.ipk`, installation, updates, verification and recovery.
+
+For installation with Claude, Codex, Antigravity, Grok or another local agent, copy the [AI-agent installation prompt](docs/ai-install-prompt.md). The agent needs local terminal/network access; a chat-only assistant can guide the steps but cannot install on your LAN.
+
 ## Your apps and controls
 
 The initial dock contains YouTube, Prime Video, Spotify, LG Channels, Rakuten TV, and Klani IM. Their actual webOS IDs were read from the target TV; existing apps are used without reinstallation. LG Content Store and Developer Mode appear in All apps alongside the other installed apps and native shortcuts.
