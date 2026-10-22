@@ -1,0 +1,20 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { buildApp } from './build.mjs';
+import { ares } from './lib/ares.mjs';
+import { inspectPackage } from './lib/ipk.mjs';
+import { ROOT, sha256, readJson, writeJson, APP_ID } from './lib/files.mjs';
+
+const buildDirectory = await buildApp();
+const output = path.join(ROOT, 'out');
+await fs.mkdir(output, { recursive: true });
+console.log(await ares('package', [buildDirectory, '--outdir', output, '--no-minify']));
+const info = await readJson(path.join(ROOT, 'config/appinfo.json'));
+const filename = APP_ID + '_' + info.version + '_all.ipk';
+const data = await fs.readFile(path.join(output, filename));
+const inspected = inspectPackage(data);
+const hash = sha256(data);
+await fs.writeFile(path.join(output, 'SHA256SUMS.txt'), hash + '  ' + filename + '\n');
+await writeJson(path.join(output, 'release-manifest.json'), { ...inspected, filename, bytes: data.length, sha256: hash, target: 'webOS 5 / Chromium 68', privileged: false, standalone: true });
+for (const file of ['WALLPAPER-CREDITS.md', 'THIRD-PARTY-NOTICES.md']) await fs.copyFile(path.join(ROOT, file), path.join(output, file));
+console.log('Verified standalone IPK: ' + filename + ' (' + data.length + ' bytes)');

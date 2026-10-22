@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <title>MyOwnTV</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="stage">
+    <div class="wallpaper" aria-hidden="true"></div>
+    <div class="wallpaper" aria-hidden="true"></div>
+    <div class="scrim" aria-hidden="true"></div>
+    <main id="home" class="screen">
+      <header class="header">
+        <div class="time-block"><p id="greeting">Welcome home</p><time id="clock"></time><p id="date"></p></div>
+        <nav id="controls" class="controls" aria-label="TV controls"></nav>
+      </header>
+      <section class="home-bottom" aria-label="Favorite apps"><h1 id="focused-name">YouTube</h1><div id="dock" class="dock"></div><div class="footer"><button id="all-apps" class="text-button" data-row="2">All apps <span aria-hidden="true">⌄</span></button><p id="landscape"></p></div></section>
+    </main>
+    <section id="library" class="screen library hidden" aria-label="All apps" aria-hidden="true"><header class="page-header"><div><p class="subtle">Your TV</p><h1>All apps</h1></div><nav id="library-controls" class="controls" aria-label="Library controls"></nav></header><div id="app-grid" class="app-grid"></div></section>
+    <section id="panel" class="screen panel hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="panel-title"><header class="page-header"><div><p class="subtle">MyOwnTV</p><h1 id="panel-title">Home settings</h1></div><button id="close-panel" class="pill" data-row="0">Done</button></header><div id="panel-content" class="panel-content"></div></section>
+    <div id="status" class="status hidden" role="status" aria-live="polite"></div>
+    <div id="preview-label" class="preview-label hidden">Browser preview</div>
+  </div>
+  <script src="app.js" defer></script>
+</body>
+</html>

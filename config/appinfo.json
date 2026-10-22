@@ -1,0 +1,14 @@
+{
+  "id": "io.github.akeyblademaster.myowntv",
+  "version": "0.1.0",
+  "vendor": "AKeybladeMaster",
+  "type": "web",
+  "main": "index.html",
+  "title": "MyOwnTV",
+  "appDescription": "Your apps and nature wallpapers, quietly at home.",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "resolution": "1920x1080",
+  "uiRevision": 2,
+  "disableBackHistoryAPI": true
+}
