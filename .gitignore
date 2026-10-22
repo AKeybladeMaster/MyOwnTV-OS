@@ -1,0 +1,13 @@
+node_modules/
+dist/
+out/
+.local/
+backup/
+shots/
+work/
+.env*
+*.pem
+*.key
+*.ipk
+playwright-report/
+test-results/
